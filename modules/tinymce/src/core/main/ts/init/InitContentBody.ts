@@ -407,9 +407,9 @@ const initContentBody = function (editor: Editor, skipWrite?: boolean) {
   TouchEvents.setup(editor);
   DetailsElement.setup(editor);
 
-  Rtc.ignore(editor, () => {
+  if (!Rtc.isRtc(editor)) {
     MultiClickSelection.setup(editor);
-  });
+  }
 
   KeyboardOverrides.setup(editor);
   ForceBlocks.setup(editor);
@@ -417,9 +417,14 @@ const initContentBody = function (editor: Editor, skipWrite?: boolean) {
 
   Events.firePreInit(editor);
 
-  Rtc.setup(editor, (rtcMode) => {
-    // TODO: Lock the editor until this is executed
-    preInit(editor, rtcMode);
+  Rtc.setup(editor).fold(() => {
+    preInit(editor, false);
+  }, (loadingRtc) => {
+    editor.setProgressState(true);
+    loadingRtc.then((rtcMode) => {
+      editor.setProgressState(false);
+      preInit(editor, rtcMode);
+    });
   });
 };
 
