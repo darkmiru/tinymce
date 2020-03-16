@@ -1,4 +1,4 @@
-import { Event, Node as DomNode, Range } from '@ephox/dom-globals';
+import { Event, Node as DomNode, Range, Element } from '@ephox/dom-globals';
 import { Fun, Obj, Option, Type } from '@ephox/katamari';
 import Editor from './api/Editor';
 import Node from './api/html/Node';
@@ -16,10 +16,19 @@ import { GetContentArgs, ContentFormat, getContentInternal } from './content/Get
 import { SetContentArgs, setContentInternal } from './content/SetContentImpl';
 import { insertHtmlAtCaret } from './content/InsertContentImpl';
 import { getSelectedContentInternal } from './selection/GetSelectionContentImpl';
+import Promise from './api/util/Promise';
 
 const isTreeNode = (content: any): content is Node => content instanceof Node;
 
-const isSupportedContentFormat = (format) => format !== 'text';
+const isSupportedContentFormat = (format: string) => format !== 'text';
+
+const async = (fn: () => void) => {
+  // tslint:disable-next-line:no-unused-expression
+  new Promise((resolve) => {
+    fn();
+    resolve();
+  });
+};
 
 /** API implemented by the RTC plugin */
 interface RtcRuntimeApi {
@@ -36,6 +45,7 @@ interface RtcRuntimeApi {
   insertContent: (node: Node) => void;
   getSelectedContent: () => Node | null;
   getRawModel: () => any;
+  setAttributesOnViewElement: (elm: Element, attrs: Record<string, string>) => void;
   isRemote: boolean;
 }
 
@@ -64,6 +74,9 @@ interface RtcAdaptor {
     setContent: (content: Content, args: SetContentArgs) => Content;
     insertContent: (value: string, details) => void;
     getSelectedContent: (format: ContentFormat, args) => string;
+  };
+  view: {
+    setAttributes: (target: Element, attrs: Record<string, string>) => void;
   };
   raw: {
     getModel: () => Option<any>
@@ -113,6 +126,9 @@ const makePlainAdaptor = (editor: Editor): RtcAdaptor => ({
     setContent: (content, args) => setContentInternal(editor, content, args),
     insertContent: (value, details) => insertHtmlAtCaret(editor, value, details),
     getSelectedContent: (format, args) => getSelectedContentInternal(editor, format, args)
+  },
+  view: {
+    setAttributes: (target, attributes) => async(() => editor.dom.setAttribs(target, attributes))
   },
   raw: {
     getModel: () => Option.none()
@@ -182,6 +198,9 @@ const makeRtcAdaptor = (tinymceEditor: Editor, rtcEditor: RtcRuntimeApi): RtcAda
         const fragment = isTreeNode(value) ? value : tinymceEditor.parser.parse(value, { insert: true });
         rtcEditor.insertContent(fragment);
       }
+    },
+    view: {
+      setAttributes: (target, attributes) => rtcEditor.setAttributesOnViewElement(target, attributes)
     },
     raw: {
       getModel: () => Option.some(rtcEditor.getRawModel())
@@ -278,4 +297,8 @@ export const insertContent = (editor: Editor, value: string, details): void => {
 
 export const getSelectedContent = (editor: Editor, format: ContentFormat, args): string => {
   return (editor as RtcEditor).rtcInstance.editor.getSelectedContent(format, args);
+};
+
+export const setAttributesOnViewElement = (editor: Editor, elm: Element, attrs: Record<string, string>): void => {
+  return (editor as RtcEditor).rtcInstance.view.setAttributes(elm, attrs);
 };

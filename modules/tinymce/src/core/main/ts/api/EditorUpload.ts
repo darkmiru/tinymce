@@ -14,6 +14,7 @@ import UploadStatus from '../file/UploadStatus';
 import Editor from './Editor';
 import { BlobCache } from './file/BlobCache';
 import * as Settings from './Settings';
+import * as Rtc from '../Rtc';
 
 /**
  * Handles image uploads, updates undo stack and patches over various internal functions.
@@ -102,14 +103,21 @@ const EditorUpload = function (editor: Editor): EditorUpload {
     });
   };
 
-  const replaceImageUri = function (image: HTMLImageElement, resultUri: string) {
+  const replaceImageUri = (image: HTMLImageElement, resultUri: string) => {
+    const src = editor.convertURL(resultUri, 'src');
+
     blobCache.removeByUri(image.src);
     replaceUrlInUndoStack(image.src, resultUri);
 
-    editor.$(image).attr({
-      'src': Settings.shouldReuseFileName(editor) ? cacheInvalidator(resultUri) : resultUri,
-      'data-mce-src': editor.convertURL(resultUri, 'src')
-    });
+    if (Rtc.isRtc(editor)) {
+      Rtc.setAttributesOnViewElement(editor, image, { src });
+    } else {
+      // We can't use Rtc.setAttributesOnViewElement directly here since in RTC there is no separation between view values and model values in the model
+      editor.$(image).attr({
+        'src': Settings.shouldReuseFileName(editor) ? cacheInvalidator(resultUri) : resultUri,
+        'data-mce-src': src
+      });
+    }
   };
 
   const uploadImages = (callback?: UploadCallback) => {
