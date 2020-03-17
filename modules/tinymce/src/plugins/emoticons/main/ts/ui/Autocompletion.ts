@@ -14,7 +14,7 @@ import { EmojiDatabase } from '../core/EmojiDatabase';
 const init = (editor: Editor, database: EmojiDatabase): void => {
   editor.ui.registry.addAutocompleter('emoticons', {
     ch: ':',
-    columns: 'auto',
+    columns: 1,
     minChars: 2,
     fetch: (pattern, maxResults) => {
       return database.waitForLoad().then(() => {
@@ -28,7 +28,6 @@ const init = (editor: Editor, database: EmojiDatabase): void => {
       autocompleteApi.hide();
     }
   });
-
 };
 
 export {

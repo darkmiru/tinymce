@@ -23,7 +23,10 @@ const emojisFrom = (list: EmojiEntry[], pattern: string, maxResults: Option<numb
       matches.push({
         value: list[i].char,
         text: list[i].title,
-        icon: list[i].char
+        icon: list[i].char,
+        meta: {
+          test: '000'
+        }
       });
       if (reachedLimit(matches.length)) {
         break;
