@@ -68,10 +68,15 @@ const replaceText = (text: string, matchText: string): string => {
 };
 
 const renderAutocompleteItem = (spec: InlineContent.AutocompleterItem, matchText: string, useText: boolean, presets: Types.PresetItemTypes, onItemValueHandler: ItemValueHandler, itemResponse: ItemResponse, sharedBackstage: UiFactoryBackstageShared, renderIcons: boolean = true): ItemTypes.ItemSpec => {
+  let descText = '';
+  if (spec.meta.desc != null) {
+    descText = '\n<div class="tox-collection__item-desc">' + spec.meta.desc + '</div>';
+  }
+
   const structure = renderItemStructure({
     presets,
     textContent: Option.none(),
-    htmlContent: useText ? spec.text.map((text) => replaceText(text, matchText)) : Option.none(),
+    htmlContent: useText ? spec.text.map((text) => (replaceText(text, matchText) + descText)) : Option.none(),
     ariaLabel: spec.text,
     iconContent: spec.icon,
     shortcutContent: Option.none(),
@@ -79,18 +84,6 @@ const renderAutocompleteItem = (spec: InlineContent.AutocompleterItem, matchText
     caret: Option.none(),
     value: spec.value
   }, sharedBackstage.providers, renderIcons, spec.icon);
-
-  if (spec.meta.test != null) {
-    const html = {
-      dom: {
-        tag: 'div',
-        classes: [ 'tox-collection__item-desc' ],
-        innerHtml: spec.meta.test
-      }
-    };
-    const desc = Option.some(html);
-    structure.optComponents.push(desc);
-  }
 
   return renderCommonItem({
     data: buildData(spec),

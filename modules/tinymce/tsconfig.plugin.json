@@ -4,6 +4,7 @@
     "paths": {
       "tinymce": ["src/core/dist/tinymce"],
       "tinymce/core/*": ["lib/globals/tinymce/core/*"],
+      "tinymce/plugins/acex/*": ["src/plugins/acex/main/ts/*"],
       "tinymce/plugins/advlist/*": ["src/plugins/advlist/main/ts/*"],
       "tinymce/plugins/anchor/*": ["src/plugins/anchor/main/ts/*"],
       "tinymce/plugins/autolink/*": ["src/plugins/autolink/main/ts/*"],

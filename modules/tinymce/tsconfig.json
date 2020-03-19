@@ -13,6 +13,7 @@
       "tinymce/themes/mobile/*": ["src/themes/mobile/main/ts/*"],
       "tinymce/themes/silver/demo/*": ["src/themes/silver/demo/ts/*"],
       "tinymce/themes/silver/*": ["src/themes/silver/main/ts/*"],
+      "tinymce/plugins/acex/*": ["src/plugins/acex/main/ts/*"],
       "tinymce/plugins/advlist/*": ["src/plugins/advlist/main/ts/*"],
       "tinymce/plugins/anchor/*": ["src/plugins/anchor/main/ts/*"],
       "tinymce/plugins/autolink/*": ["src/plugins/autolink/main/ts/*"],
