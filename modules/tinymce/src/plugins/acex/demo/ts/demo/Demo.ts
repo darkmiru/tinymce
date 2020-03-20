@@ -23,18 +23,32 @@ tinymce.init({
   // toolbar_location: 'bottom',
   height: 600,
   acex: {
-    fetch: (editor, pattern) => {
+    maxResults: 5,
+    fetch: (editor, pattern, maxResults) => {
       return new tinymce.util.Promise(function (resolve) {
-        const names = testSet.filter(function (name) {
-          return name.toLowerCase().indexOf(pattern) !== -1;
+        let cnt = 0;
+        const names = [];
+        testSet.some(function (name) {
+          const ret = (name.toLowerCase().indexOf(pattern) === 0);
+          if (ret === true) {
+            cnt++;
+            names.push(name);
+            if (cnt >= maxResults) {
+              return true;
+            }
+          }
+          return false;
         });
 
         const results = names.map(function (name) {
+          const tmp = name.split(' ');
+          const initialName = tmp[0].substr(0, 1) + ((tmp.length > 1) ? tmp[1].substr(0, 1) : '');
           return {
             value: name,
             text: name,
+            icon: initialName.toUpperCase(),
             meta: {
-              isEmail: true,
+              // disabled: true,
               desc: name.replace(/\s/g, '') + '@test.cc'
             }
           };
@@ -47,15 +61,6 @@ tinymce.init({
       const insertText = '<a href="mailto:' + meta.desc + '"><span style="text-decoration-line: none;">@' + value + '</span></a>';
       editor.insertContent(insertText);
       autocompleteApi.hide();
-    },
-    init_instance_callback: function(editor) {
-      editor.on('click', function(e) {
-        console.log('click -- ' + e.name, e);
-      });
-
-      editor.getBody().addEventListener('click', function(e) {
-        console.log('click2 -- ' + e.name, e);
-      });
     }
   }
 });

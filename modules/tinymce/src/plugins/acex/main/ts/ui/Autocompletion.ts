@@ -17,6 +17,7 @@ const init = (editor: Editor, data: any): void => {
     ch: '@',
     columns: 1,
     minChars: 0,
+    maxResults: config.maxResults || 10,
     fetch: (pattern, maxResults) => {
       if (config.fetch) {
         return config.fetch(editor, pattern, maxResults);

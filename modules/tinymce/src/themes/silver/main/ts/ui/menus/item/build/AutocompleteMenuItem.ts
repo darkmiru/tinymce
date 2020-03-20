@@ -85,6 +85,12 @@ const renderAutocompleteItem = (spec: InlineContent.AutocompleterItem, matchText
     value: spec.value
   }, sharedBackstage.providers, renderIcons, spec.icon);
 
+  if (spec.meta.desc != null) {
+    delete(structure.dom.attributes);
+    structure.dom.classes.push('desc-menu');
+    spec.disabled = (spec.meta.disabled === true);
+  }
+
   return renderCommonItem({
     data: buildData(spec),
     disabled: spec.disabled,
