@@ -6,9 +6,17 @@ import * as DomModification from '../../dom/DomModification';
 import * as FocusApis from './FocusApis';
 import { FocusingConfig } from './FocusingTypes';
 
+// @todo miru update 시에는 이 부분을 추가해야 함.
+import { PlatformDetection } from '@ephox/sand';
+
+const platform = PlatformDetection.detect();
+const deviceType = platform.deviceType;
+const isTouch = deviceType.isTouch();
+
 // TODO: DomModification types
 const exhibit = (base: DomDefinitionDetail, focusConfig: FocusingConfig): any => {
-  const mod = focusConfig.ignore ? { } : {
+  // const mod = focusConfig.ignore ? { } : {
+  const mod = (focusConfig.ignore || isTouch) ? { } : {
     attributes: {
       tabindex: '-1'
     }
