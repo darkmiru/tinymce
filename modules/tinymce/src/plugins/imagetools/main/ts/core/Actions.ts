@@ -73,8 +73,8 @@ const createId = function () {
 
 const isLocalImage = function (editor: Editor, img) {
   const url = img.src;
-
-  return url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || new URI(url).host === editor.documentBaseURI.host;
+  // @todo 업데이트 시에 반영할 것. (content protocol은 local로 봐야 함.)
+  return url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || url.indexOf('content:') === 0 || new URI(url).host === editor.documentBaseURI.host;
 };
 
 const isCorsImage = function (editor: Editor, img) {
