@@ -171,6 +171,10 @@ const moveSelectionToFirstCaretPosition = (editor: Editor) => {
 };
 
 const initEditor = function (editor: Editor) {
+  const beforeBindEvent = editor.getParam('before_bind_event_func', null);
+  if (beforeBindEvent !== null) {
+    beforeBindEvent(editor);
+  }
   editor.bindPendingEventDelegates();
   editor.initialized = true;
   Events.fireInit(editor);

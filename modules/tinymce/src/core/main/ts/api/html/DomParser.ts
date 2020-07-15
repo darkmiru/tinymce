@@ -683,6 +683,12 @@ const DomParser = function (settings?: DomParserSettings, schema = Schema()): Do
 
     parser.parse(html, args.format);
 
+    // @todo : 업그레이드 시 추가할 것. 반드시~!
+    // raw 타입이면 여기서 return 하자.
+    if (args.format === 'raw') {
+      return rootNode;
+    }
+
     // Fix invalid children or report invalid children in a contextual parsing
     if (validate && invalidChildren.length) {
       if (!args.context) {

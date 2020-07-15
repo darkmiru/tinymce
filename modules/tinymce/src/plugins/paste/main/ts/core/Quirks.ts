@@ -124,9 +124,11 @@ function removeWebKitStyles(editor: Editor, content: string, internal: boolean, 
           currentValue = dom.toHex(currentValue);
         }
 
-        if (currentValue !== inputValue) {
-          outputStyles[webKitStyles[i]] = inputValue;
-        }
+        // @todo tinymce 업그레이드 시 반영할 것.
+        // node의 color와 동일한 색은 무시하는 부분. parent의 색을 모르기 때문에 이 방식으로 color을 제거하면 문제가 발생할 수 있다.
+        // if (currentValue !== inputValue) {
+        outputStyles[webKitStyles[i]] = inputValue;
+        // }
       }
 
       outputStyles = dom.serializeStyle(outputStyles, 'span');

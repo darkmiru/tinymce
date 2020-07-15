@@ -29,6 +29,21 @@ const getDefaultTextColor = function (editor) {
   return editor.getParam('fullpage_default_text_color');
 };
 
+// @todo : 업그레이드 시 추가할 것. 반드시~!
+const getDefaultInlineCSS = function (editor) {
+  return editor.getParam('fullpage_default_inline_css');
+};
+const getDefaultCSS = function (editor) {
+  return editor.getParam('fullpage_default_css');
+};
+const getStyleKey =  function (editor) {
+  return editor.getParam('fullpage_default_css_key');
+};
+
+const getBodyAttr = function (editor) {
+  return editor.getParam('fullpage_body_attr');
+};
+
 const getDefaultTitle = function (editor) {
   return editor.getParam('fullpage_default_title');
 };
@@ -44,6 +59,10 @@ export default {
   getDefaultFontFamily,
   getDefaultFontSize,
   getDefaultTextColor,
+  getDefaultInlineCSS,
+  getDefaultCSS,
+  getStyleKey,
+  getBodyAttr,
   getDefaultTitle,
   getDefaultDocType
 };

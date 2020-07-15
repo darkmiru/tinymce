@@ -19,9 +19,26 @@ table {
   border-collapse: collapse;
 }
 
+// @todo tinymce 업그레이드 시 반영할 것.
+// table th,
+// table td {
+//   border: 1px solid #ccc;
+//   padding: .4rem;
+// }
+
+// @todo tinymce 업그레이드 시 반영할 것.
 table th,
 table td {
-  border: 1px solid #ccc;
+  border: unset;
+  padding: unset;
+}
+
+// @todo tinymce 업그레이드 시 반영할 것.
+table[data-mce-selected] > * > th,
+table[data-mce-selected] > * > td,
+table[data-mce-selected] > * > * > th,
+table[data-mce-selected] > * > * > td {
+  border: 1px dotted #ccc;
   padding: .4rem;
 }
 

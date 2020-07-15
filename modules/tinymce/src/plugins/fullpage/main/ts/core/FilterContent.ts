@@ -75,11 +75,13 @@ const handleSetContent = function (editor: Editor, headState, footState, evt) {
   const bodyElm = headerFragment.getAll('body')[0];
   if (bodyElm) {
     dom.setAttribs(editor.getBody(), {
-      style: bodyElm.attr('style') || '',
-      dir: bodyElm.attr('dir') || '',
-      vLink: bodyElm.attr('vlink') || '',
-      link: bodyElm.attr('link') || '',
-      aLink: bodyElm.attr('alink') || ''
+      'style': bodyElm.attr('style') || '',
+      'dir': bodyElm.attr('dir') || '',
+      'vLink': bodyElm.attr('vlink') || '',
+      'link': bodyElm.attr('link') || '',
+      'aLink': bodyElm.attr('alink') || '',
+      // @todo tinymce 업그레이드 시 반영할 것.
+      'nine-mail-id': bodyElm.attr('nine-mail-id') || ''
     });
   }
 
@@ -125,7 +127,7 @@ const handleSetContent = function (editor: Editor, headState, footState, evt) {
 };
 
 const getDefaultHeader = function (editor) {
-  let header = '', value, styles = '';
+  let header = '', value, styles = '', attrs = '';
 
   if (Settings.getDefaultXmlPi(editor)) {
     const piEncoding = Settings.getDefaultEncoding(editor);
@@ -143,6 +145,27 @@ const getDefaultHeader = function (editor) {
     header += '<meta http-equiv="Content-Type" content="text/html; charset=' + value + '" />\n';
   }
 
+  // @todo tinymce 업그레이드 시 반영할 것.
+  if ((value = Settings.getDefaultCSS(editor))) {
+    let nineVersion = null;
+    if (nineVersion = Settings.getStyleKey(editor)) {
+      nineVersion = (nineVersion != null && nineVersion.length > 0) ? ' ' + nineVersion : '';
+    }
+    header += '<style type="text/css"' + nineVersion + '>' + value + '</style>\n';
+  }
+
+  // @todo tinymce 업그레이드 시 반영할 것.
+  if ((value = Settings.getBodyAttr(editor))) {
+    Object.keys(value).map(function (key) {
+      attrs += ' ' + key + '="' + value[key] + '"';
+    });
+  }
+
+  // @todo tinymce 업그레이드 시 반영할 것.
+  if ((value = Settings.getDefaultInlineCSS(editor))) {
+    styles += value;
+  }
+
   if ((value = Settings.getDefaultFontFamily(editor))) {
     styles += 'font-family: ' + value + ';';
   }
@@ -155,7 +178,7 @@ const getDefaultHeader = function (editor) {
     styles += 'color: ' + value + ';';
   }
 
-  header += '</head>\n<body' + (styles ? ' style="' + styles + '"' : '') + '>\n';
+  header += '</head>\n<body' + (styles ? ' style="' + styles + '"' : '') + attrs + '>\n';
 
   return header;
 };

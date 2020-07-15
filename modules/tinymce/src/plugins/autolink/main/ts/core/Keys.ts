@@ -59,7 +59,7 @@ const setEnd = function (rng, container, offset) {
 
 const parseCurrentLine = function (editor, endOffset, delimiter) {
   let rng, end, start, endContainer, bookmark, text, matches, prev, len, rngText;
-  const autoLinkPattern = Settings.getAutoLinkPattern(editor);
+  // const autoLinkPattern = Settings.getAutoLinkPattern(editor);
   const defaultLinkTarget = Settings.getDefaultLinkTarget(editor);
 
   // Never create a link when we are inside a link
@@ -117,6 +117,18 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
 
   start = end;
 
+  // @todo 업데이트시 반영할 것. autolink에 전화번호 링크 기능 추가.
+  let numCheck = true;
+  let isTel = false;
+  let subNumCheck = true;
+  const telRegex = /^(tel:)?([+]?)([(]{0,1}[0-9]{1,4}[)]{0,1}[- \t\./0-9]*[0-9]+[.]?)$/;
+  const telCharRegex = /[ tel:\d().+-]/;
+  const subTelRegex = /[ \d.-]/;
+  const telOutRegex = /[ ]{2,}|[-.]{2,}|([-.][ ][-.])/;
+  let firstSpacePos = -1;
+  let lastSpacePos = -1;
+  let prevATag = null;
+
   do {
     // Move the selection one character backwards.
     setStart(rng, endContainer, end >= 2 ? end - 2 : 0);
@@ -124,13 +136,45 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
     end -= 1;
     rngText = rng.toString();
 
+    if (rngText === ' ' || (end - 2) < 0) {
+      lastSpacePos = end;
+      if (firstSpacePos === -1) {
+        firstSpacePos = end;
+      }
+      if (subTelRegex.test(rngText) === true) {
+        const prev = endContainer.previousSibling;
+        if (prev != null && subNumCheck === true && prev.nodeType === 1 && prev.tagName === 'A' && telRegex.test(prev.textContent) === true) {
+          isTel = true;
+          prevATag = prev;
+        }
+      }
+    }
+    if (numCheck === true && (telCharRegex.test(rngText) !== true || (end - 2) < 0)) {
+      numCheck = false;
+      if (lastSpacePos !== -1) {
+        isTel = true;
+      }
+    }
+    if (subNumCheck === true && (subTelRegex.test(rngText) !== true || (end - 2) < 0)) {
+      subNumCheck = false;
+    }
     // Loop until one of the following is found: a blank space, &nbsp;, delimiter, (end-2) >= 0
-  } while (rngText !== ' ' && rngText !== '' && rngText.charCodeAt(0) !== 160 && (end - 2) >= 0 && rngText !== delimiter);
+  } while ((firstSpacePos === -1 || subNumCheck === true || numCheck === true) && rngText !== '' && rngText.charCodeAt(0) !== 160 && (end - 2) >= 0 && rngText !== delimiter);
 
-  if (rangeEqualsDelimiterOrSpace(rng.toString(), delimiter)) {
-    setStart(rng, endContainer, end);
+  if (isTel === false) {
+    end = firstSpacePos;
+  } else {
+    end = lastSpacePos;
+  }
+
+  if (prevATag != null) {
+    setStart(rng, prevATag, 0);
     setEnd(rng, endContainer, start);
+    document.execCommand('unlink');
+  } else if (rangeEqualsDelimiterOrSpace(rng.toString(), delimiter)) {
+    setStart(rng, endContainer, end);
     end += 1;
+    setEnd(rng, endContainer, start);
   } else if (rng.startOffset === 0) {
     setStart(rng, endContainer, 0);
     setEnd(rng, endContainer, start);
@@ -146,21 +190,76 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
   }
 
   text = rng.toString().trim();
-  matches = text.match(autoLinkPattern);
 
-  const protocol = Settings.getDefaultLinkProtocol(editor);
+  let linkURL = null;
 
-  if (matches) {
-    if (matches[1] === 'www.') {
-      matches[1] = protocol + '://www.';
-    } else if (/@$/.test(matches[1]) && !/^mailto:/.test(matches[1])) {
-      matches[1] = 'mailto:' + matches[1];
+  if (isTel === true) {
+    if (telOutRegex.test(text) === false && text.length < 35) {
+      matches = text.match(telRegex);
+      // 완전한 숫자이면 전화번호 변환하지 않음. (소수점 포함)
+      let isAllNumber = (/^[0-9.]{5,}$/.test(text) === true);
+      if (isAllNumber === true) {
+        const pcnt = (text.match(/[.]/g) || []).length;
+        if (pcnt > 1) {
+          isAllNumber = false;
+        }
+      }
+      if (matches && isAllNumber === false) {
+        let telNum = matches[3].replace(/[ ().+-]/g, '');
+        if ((matches[2] !== '+' && telNum.length >= 4) || (matches[2] === '+' && telNum.length >= 7)) {
+          if (matches[2] === '+') {
+            while (telNum.indexOf('0') === 0) {
+              telNum = telNum.substring(1);
+            }
+          }
+          if (telNum.length < 16) {
+            linkURL = 'tel:' + matches[2] + telNum;
+          }
+        }
+      }
     }
+  } else {
+    if (text.indexOf('@') !== -1) {
+      const emailRegex = /^(mailto:)?([^\s@]+@[^\s@]+\.[^\s@]{2,})$/i;
+      matches = text.match(emailRegex);
+      if (matches) {
+        if (matches[1] == null) {
+          linkURL = 'mailto:' + matches[2];
+        } else {
+          linkURL = matches[0];
+        }
+      }
+    } else {
+      const protocol = Settings.getDefaultLinkProtocol(editor);
+
+      const urlRegex = /^(https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/)?(([a-z0-9\w]{2,}\.)+[a-z0-9]{2,})$/i;
+      matches = text.match(urlRegex);
+      if (matches) {
+        if (matches[1] == null) {
+          linkURL = protocol + '://' + matches[2];
+        } else {
+          linkURL = matches[0];
+        }
+      }
+    }
+  }
+
+  // matches = text.match(autoLinkPattern);
+  // const protocol = Settings.getDefaultLinkProtocol(editor);
+
+  if (linkURL !== null) {
+  // if (matches) {
+    // if (matches[1] === 'www.') {
+    //   matches[1] = protocol + '://www.';
+    // } else if (/@$/.test(matches[1]) && !/^mailto:/.test(matches[1])) {
+    //   matches[1] = 'mailto:' + matches[1];
+    // }
 
     bookmark = editor.selection.getBookmark();
 
     editor.selection.setRng(rng);
-    editor.execCommand('createlink', false, matches[1] + matches[2]);
+    // editor.execCommand('createlink', false, matches[1] + matches[2]);
+    editor.execCommand('createlink', false, linkURL);
 
     if (defaultLinkTarget !== false) {
       editor.dom.setAttrib(editor.selection.getNode(), 'target', defaultLinkTarget);
@@ -211,5 +310,10 @@ const setup = function (editor: Editor) {
 };
 
 export default {
-  setup
+  setup,
+
+  // @todo tinymce 업그레이드 시 반영할 것. ios에서 한글 입력 조합 문제로 인해 강제로 이 부분 호출이 필요함.
+  apis: {
+    handleEnter
+  }
 };

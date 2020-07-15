@@ -11,7 +11,7 @@ import { Element } from '@ephox/sugar';
 import Editor from '../api/Editor';
 import Node from '../api/html/Node';
 import Tools from '../api/util/Tools';
-import TrimHtml from '../dom/TrimHtml';
+// import TrimHtml from '../dom/TrimHtml';
 import Zwsp from '../text/Zwsp';
 import Settings from '../api/Settings';
 import { isWsPreserveElement } from '../dom/ElementType';
@@ -46,9 +46,11 @@ const getContentFromBody = (editor: Editor, args: GetContentArgs, body: HTMLElem
     editor.fire('BeforeGetContent', args);
   }
 
-  if (args.format === 'raw') {
-    content = Tools.trim(TrimHtml.trimExternal(editor.serializer, body.innerHTML));
-  } else if (args.format === 'text') {
+  // @todo tinymce 업그레이드 시 반영할 것.
+  // if (args.format === 'raw') {
+  //   content = Tools.trim(TrimHtml.trimExternal(editor.serializer, body.innerHTML));
+  // } else
+  if (args.format === 'text') {
     content = Zwsp.trim(body.innerText || body.textContent);
   } else if (args.format === 'tree') {
     return editor.serializer.serialize(body, args);

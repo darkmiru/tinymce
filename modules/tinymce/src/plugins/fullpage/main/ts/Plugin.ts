@@ -7,9 +7,12 @@
 
 import { Cell } from '@ephox/katamari';
 import PluginManager from 'tinymce/core/api/PluginManager';
+import * as Api from './api/Api';
 import Commands from './api/Commands';
 import FilterContent from './core/FilterContent';
 import Buttons from './ui/Buttons';
+
+export type CustomHeadSpecs = Cell<string>;
 
 export default function () {
   PluginManager.add('fullpage', function (editor) {
@@ -18,5 +21,10 @@ export default function () {
     Commands.register(editor, headState);
     Buttons.register(editor);
     FilterContent.setup(editor, headState, footState);
+
+    // @todo 업데이트 시에 추가할 것. (API 새로 추가.)
+    const api = Api.get(headState);
+
+    return api;
   });
 }

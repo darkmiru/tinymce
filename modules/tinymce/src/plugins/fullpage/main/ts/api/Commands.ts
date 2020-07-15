@@ -11,6 +11,10 @@ const register = function (editor, headState) {
   editor.addCommand('mceFullPageProperties', function () {
     Dialog.open(editor, headState);
   });
+
+  editor.addCommand('mceFullPageProperties', function () {
+    Dialog.open(editor, headState);
+  });
 };
 
 export default {
