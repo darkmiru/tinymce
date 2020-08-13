@@ -121,13 +121,16 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
   let numCheck = true;
   let isTel = false;
   let subNumCheck = true;
-  const telRegex = /^(tel:)?([+]?)([(]{0,1}[0-9]{1,4}[)]{0,1}[- \t\./0-9]*[0-9]+[.]?)$/;
-  const telCharRegex = /[ tel:\d().+-]/;
+  const telRegex = /^(tel:)?[ ]?([+]?)([(]{0,1}[0-9]{1,4}[)]{0,1}[- \t\./0-9]*[0-9]+[.]?)$/i;
+  const telCharRegex = /[ tel:\d().+-]/i;
   const subTelRegex = /[ \d.-]/;
   const telOutRegex = /[ ]{2,}|[-.]{2,}|([-.][ ][-.])/;
   let firstSpacePos = -1;
   let lastSpacePos = -1;
+  let prevLastSpacePos = -1;
   let prevATag = null;
+
+  let curStr = '';
 
   do {
     // Move the selection one character backwards.
@@ -135,19 +138,34 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
     setEnd(rng, endContainer, end >= 1 ? end - 1 : 0);
     end -= 1;
     rngText = rng.toString();
+    curStr = rngText + curStr;
 
     if (rngText === ' ' || (end - 2) < 0) {
       lastSpacePos = end;
       if (firstSpacePos === -1) {
         firstSpacePos = end;
       }
-      if (subTelRegex.test(rngText) === true) {
+      if (subNumCheck === true) {
         const prev = endContainer.previousSibling;
-        if (prev != null && subNumCheck === true && prev.nodeType === 1 && prev.tagName === 'A' && telRegex.test(prev.textContent) === true) {
+        if (prev != null && prev.nodeType === 1 && prev.tagName === 'A' && telRegex.test(prev.textContent) === true) {
           isTel = true;
           prevATag = prev;
         }
+      } else if (numCheck === true) {
+        const tmpCheck = curStr.match(/([tel:]+)/gi);
+        if (tmpCheck != null && (tmpCheck.length > 1 || tmpCheck[0].toLowerCase().indexOf('tel:') !== 0)) {
+          numCheck = false;
+          lastSpacePos = prevLastSpacePos;
+          if (lastSpacePos !== -1) {
+            isTel = true;
+            if (lastSpacePos > 0) {
+              setStart(rng, endContainer, lastSpacePos - 1);
+              setEnd(rng, endContainer, lastSpacePos);
+            }
+          }
+        }
       }
+      prevLastSpacePos = lastSpacePos;
     }
     if (numCheck === true && (telCharRegex.test(rngText) !== true || (end - 2) < 0)) {
       numCheck = false;
@@ -220,7 +238,7 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
     }
   } else {
     if (text.indexOf('@') !== -1) {
-      const emailRegex = /^(mailto:)?([^\s@]+@[^\s@]+\.[^\s@]{2,})$/i;
+      const emailRegex = /^(mailto:)?([^\s@:]+@[^\s@]+\.[^\s@]{2,})$/i;
       matches = text.match(emailRegex);
       if (matches) {
         if (matches[1] == null) {
@@ -232,7 +250,7 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
     } else {
       const protocol = Settings.getDefaultLinkProtocol(editor);
 
-      const urlRegex = /^(https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/)?(([a-z0-9\w]{2,}\.)+[a-z0-9]{2,})$/i;
+      const urlRegex = /^((https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/){1}|(www\.){1})[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
       matches = text.match(urlRegex);
       if (matches) {
         if (matches[1] == null) {
@@ -314,6 +332,7 @@ export default {
 
   // @todo tinymce 업그레이드 시 반영할 것. ios에서 한글 입력 조합 문제로 인해 강제로 이 부분 호출이 필요함.
   apis: {
-    handleEnter
+    handleEnter,
+    handleSpacebar
   }
 };
