@@ -15,10 +15,12 @@ const rangeEqualsDelimiterOrSpace = function (rangeString, delimiter) {
 
 const handleEclipse = function (editor) {
   parseCurrentLine(editor, -1, '(');
+  applyCurrentLine();
 };
 
 const handleSpacebar = function (editor) {
   parseCurrentLine(editor, 0, '');
+  applyCurrentLine();
 };
 
 const handleEnter = function (editor) {
@@ -57,10 +59,10 @@ const setEnd = function (rng, container, offset) {
   }
 };
 
+let lineInfo = null;
+
 const parseCurrentLine = function (editor, endOffset, delimiter) {
-  let rng, end, start, endContainer, bookmark, text, matches, prev, len, rngText;
-  // const autoLinkPattern = Settings.getAutoLinkPattern(editor);
-  const defaultLinkTarget = Settings.getDefaultLinkTarget(editor);
+  let rng, end, start, endContainer, text, matches, prev, len, rngText;
 
   // Never create a link when we are inside a link
   if (editor.selection.getNode().tagName === 'A') {
@@ -262,8 +264,38 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
     }
   }
 
+  if (linkURL !== null) {
+    lineInfo = {
+      editor,
+      link: linkURL,
+      range: {
+        startContainer: rng.startContainer,
+        startOffset: rng.startOffset,
+        endContainer: rng.endContainer,
+        endOffset: rng.endOffset,
+      }
+    };
+  } else {
+    lineInfo = null;
+  }
+
+  return (lineInfo !== null);
+};
+
+const applyCurrentLine = function () {
   // matches = text.match(autoLinkPattern);
   // const protocol = Settings.getDefaultLinkProtocol(editor);
+  let editor, linkURL, rng, bookmark;
+
+  if (lineInfo != null) {
+    editor = lineInfo.editor;
+    linkURL = lineInfo.link;
+    rng = editor.selection.getRng(true).cloneRange();
+    const range = lineInfo.range;
+    setStart(rng, range.startContainer, range.startOffset);
+    setEnd(rng, range.endContainer, range.endOffset);
+    lineInfo = null;
+  }
 
   if (linkURL !== null) {
   // if (matches) {
@@ -272,28 +304,33 @@ const parseCurrentLine = function (editor, endOffset, delimiter) {
     // } else if (/@$/.test(matches[1]) && !/^mailto:/.test(matches[1])) {
     //   matches[1] = 'mailto:' + matches[1];
     // }
+    editor.undoManager.transact(function () {
+      bookmark = editor.selection.getBookmark();
 
-    bookmark = editor.selection.getBookmark();
+      editor.selection.setRng(rng);
+      // editor.execCommand('createlink', false, matches[1] + matches[2]);
+      editor.execCommand('createlink', false, linkURL);
 
-    editor.selection.setRng(rng);
-    // editor.execCommand('createlink', false, matches[1] + matches[2]);
-    editor.execCommand('createlink', false, linkURL);
+      // const autoLinkPattern = Settings.getAutoLinkPattern(editor);
+      const defaultLinkTarget = Settings.getDefaultLinkTarget(editor);
 
-    if (defaultLinkTarget !== false) {
-      editor.dom.setAttrib(editor.selection.getNode(), 'target', defaultLinkTarget);
-    }
+      if (defaultLinkTarget !== false) {
+        editor.dom.setAttrib(editor.selection.getNode(), 'target', defaultLinkTarget);
+      }
 
-    editor.selection.moveToBookmark(bookmark);
-    editor.nodeChanged();
+      editor.selection.moveToBookmark(bookmark);
+      editor.nodeChanged();
+    });
   }
 };
 
 const setup = function (editor: Editor) {
   let autoUrlDetectState;
 
+  // @todo tinymce 업그레이드 시 반영할 것.
   editor.on('keydown', function (e) {
     if (e.keyCode === 13) {
-      return handleEnter(editor);
+      handleEnter(editor);
     }
   });
 
@@ -316,13 +353,16 @@ const setup = function (editor: Editor) {
 
   editor.on('keypress', function (e) {
     if (e.keyCode === 41) {
-      return handleEclipse(editor);
+      handleEclipse(editor);
+      applyCurrentLine();
     }
   });
 
   editor.on('keyup', function (e) {
     if (e.keyCode === 32) {
-      return handleSpacebar(editor);
+      handleSpacebar(editor);
+    } else if (e.keyCode === 13) {
+      applyCurrentLine();
     }
   });
 };

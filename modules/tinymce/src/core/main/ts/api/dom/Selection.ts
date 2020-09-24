@@ -7,6 +7,7 @@
 
 import { Selection as NativeSelection, HTMLElement, Node, Range, Element, ClientRect, Window } from '@ephox/dom-globals';
 import { Compare, Element as SugarElement } from '@ephox/sugar';
+import { PlatformDetection } from '@ephox/sand';
 import Env from '../Env';
 import BookmarkManager from './BookmarkManager';
 import CaretPosition from '../../caret/CaretPosition';
@@ -55,6 +56,9 @@ const isValidRange = function (rng: Range) {
     return isAttachedToDom(rng.startContainer) && isAttachedToDom(rng.endContainer);
   }
 };
+
+const detection = PlatformDetection.detect();
+const isiOS = detection.os.isiOS();
 
 interface Selection {
   bookmarkManager: any;
@@ -403,9 +407,17 @@ const Selection = function (dom: DOMUtils, win: Window, serializer: Serializer, 
       explicitRange = rng;
 
       try {
-        sel.removeAllRanges();
-        sel.addRange(rng);
-      } catch (ex) {
+        if (sel.rangeCount === 1 && isiOS !== true) {
+          // @todo tinymce 업그레이드 시 반영할 것.
+          // sel.removeAllRanges 호출 시 안드로이드에서 키보드가 내려가는 문제 발생 (webview 8.25 버전 문제)
+          const selRange = sel.getRangeAt(0);
+          selRange.setStart(rng.startContainer, rng.startOffset);
+          selRange.setEnd(rng.endContainer, rng.endOffset);
+        } else {
+          sel.removeAllRanges();
+          sel.addRange(rng);
+        }
+  } catch (ex) {
         // IE might throw errors here if the editor is within a hidden container and selection is changed
       }
 

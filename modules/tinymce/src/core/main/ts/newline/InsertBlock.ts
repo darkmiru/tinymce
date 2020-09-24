@@ -431,8 +431,9 @@ const insert = function (editor: Editor, evt?: EditorEvent<KeyboardEvent>) {
     parentBlockName = containerBlockName;
   }
 
+  // @todo tinymce 업그레이드 시 반영할 것.
   // Handle enter in list item
-  if (/^(LI|DT|DD)$/.test(parentBlockName)) {
+  if (/^(LI|DT|DD)$/.test(parentBlockName) || containerBlockName === 'BLOCKQUOTE') {
     // Handle enter inside an empty list item
     if (dom.isEmpty(parentBlock)) {
       InsertLi.insert(editor, createNewBlock, containerBlock, parentBlock, newBlockName);
