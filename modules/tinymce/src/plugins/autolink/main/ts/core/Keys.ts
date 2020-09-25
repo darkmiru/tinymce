@@ -297,7 +297,7 @@ const applyCurrentLine = function () {
     lineInfo = null;
   }
 
-  if (linkURL !== null) {
+  if (linkURL != null) {
   // if (matches) {
     // if (matches[1] === 'www.') {
     //   matches[1] = protocol + '://www.';
