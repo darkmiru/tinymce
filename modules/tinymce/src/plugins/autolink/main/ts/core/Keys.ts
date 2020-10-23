@@ -324,12 +324,14 @@ const applyCurrentLine = function () {
   }
 };
 
+let isEnabled = true;
+
 const setup = function (editor: Editor) {
   let autoUrlDetectState;
 
   // @todo tinymce 업그레이드 시 반영할 것.
   editor.on('keydown', function (e) {
-    if (e.keyCode === 13) {
+    if (e.keyCode === 13 && isEnabled === true) {
       handleEnter(editor);
     }
   });
@@ -352,19 +354,23 @@ const setup = function (editor: Editor) {
   }
 
   editor.on('keypress', function (e) {
-    if (e.keyCode === 41) {
+    if (e.keyCode === 41 && isEnabled === true) {
       handleEclipse(editor);
       applyCurrentLine();
     }
   });
 
   editor.on('keyup', function (e) {
-    if (e.keyCode === 32) {
+    if (e.keyCode === 32 && isEnabled === true) {
       handleSpacebar(editor);
-    } else if (e.keyCode === 13) {
+    } else if (e.keyCode === 13 && isEnabled === true) {
       applyCurrentLine();
     }
   });
+};
+
+const setEnabled = function (val) {
+  isEnabled = val;
 };
 
 export default {
@@ -372,6 +378,7 @@ export default {
 
   // @todo tinymce 업그레이드 시 반영할 것. ios에서 한글 입력 조합 문제로 인해 강제로 이 부분 호출이 필요함.
   apis: {
+    setEnabled,
     handleEnter,
     handleSpacebar
   }
