@@ -59,6 +59,7 @@ const isValidRange = function (rng: Range) {
 
 const detection = PlatformDetection.detect();
 const isiOS = detection.os.isiOS();
+const isOverAndroid23 = detection.os.isAndroid() && detection.os.version.major > 6;
 
 interface Selection {
   bookmarkManager: any;
@@ -407,7 +408,7 @@ const Selection = function (dom: DOMUtils, win: Window, serializer: Serializer, 
       explicitRange = rng;
 
       try {
-        if (sel.rangeCount === 1 && isiOS !== true) {
+        if (sel.rangeCount === 1 && isiOS !== true && isOverAndroid23 === true ) {
           // @todo tinymce 업그레이드 시 반영할 것.
           // sel.removeAllRanges 호출 시 안드로이드에서 키보드가 내려가는 문제 발생 (webview 8.25 버전 문제)
           const selRange = sel.getRangeAt(0);
